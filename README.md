@@ -1,3 +1,3 @@
-# @i-xi-dev/utf32-encoder
+# @i-xi-dev/utf32
 
 This is not for direct usage.
