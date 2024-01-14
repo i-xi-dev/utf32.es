@@ -1,1 +1,3 @@
-# utf32-encoder.es
+# @i-xi-dev/utf32-encoder
+
+This is not for direct usage.

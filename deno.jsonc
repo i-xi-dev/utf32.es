@@ -1,0 +1,15 @@
+{
+  "lint": {
+    "rules": {
+      "tags": ["recommended"],
+      "exclude": ["no-namespace"]
+    }
+  },
+  "fmt": {
+  },
+  "compilerOptions": {
+  },
+  "tasks": {
+    "test": "deno test tests/"
+  }
+}
