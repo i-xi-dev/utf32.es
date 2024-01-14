@@ -4,7 +4,7 @@ import {
   SafeInteger,
   StringEx,
   TextEncoding,
-  Uint16,
+  Uint32,
   Uint8,
 } from "../deps.ts";
 
@@ -25,6 +25,44 @@ function _encodeShared(
   },
   littleEndian: boolean,
 ): TextEncoderEncodeIntoResult {
+  const dstView = new DataView(dstBuffer);
+
+  let read = 0;
+  let written = 0;
+
+  for (const rune of srcString) {
+    const codePoint = rune.codePointAt(0) as CodePoint;
+
+    if ((written + (rune.length * Uint32.BYTES)) > dstView.byteLength) {
+      break;
+    }
+    read = read + rune.length;
+
+    if (CodePoint.isSurrogateCodePoint(codePoint) !== true) {
+      dstView.setUint32(
+        dstOffset + written,
+        rune.codePointAt(0) as CodePoint,
+        littleEndian,
+      );
+      written = written + Uint32.BYTES;
+    } else {
+      if (options.fatal === true) {
+        throw new TypeError(
+          `encode-error: \uFFFD ${CodePoint.toString(codePoint)}`,
+        );
+      } else {
+        for (const byte of options.replacementBytes) {
+          dstView.setInt8(dstOffset + written, byte);
+          written = written + Uint8.BYTES;
+        }
+      }
+    }
+  }
+
+  return {
+    read,
+    written,
+  };
 }
 
 function _encodeBe(
@@ -161,3 +199,41 @@ export namespace Utf32 {
     }
   }
 }
+
+// function _decode(
+//   label: string,
+//   input: BufferSource,
+//   options: Encoding.DecodeOptions,
+// ): string {
+//   let view: DataView;
+//   if (ArrayBuffer.isView(input)) {
+//     view = new DataView(input.buffer);
+//   } else if (input instanceof ArrayBuffer) {
+//     view = new DataView(input);
+//   } else {
+//     throw new TypeError("input");
+//   }
+
+//   if (view.byteLength % Uint32.BYTES !== 0) {
+//     throw new TypeError("input");
+//   }
+
+//   const runes = [];
+//   let codePoint: number;
+//   for (let i = 0; i < view.byteLength; i = i + Uint32.BYTES) {
+//     codePoint = view.getUint32(i, label === _LE_LABEL);
+//     if (CodePoint.isCodePoint(codePoint) !== true) {
+//       throw new TypeError("input[*]");
+//     }
+//     runes.push(
+//       String.fromCodePoint(codePoint),
+//     );
+//   }
+
+//   const str = runes.join("");
+//   if (options?.ignoreBOM === true) {
+//     return str;
+//   } else {
+//     return str.startsWith(BOM) ? str.substring(1) : str;
+//   }
+// }
