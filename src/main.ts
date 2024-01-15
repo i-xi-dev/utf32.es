@@ -37,13 +37,16 @@ function _decodeShared(
     ? (srcByteCount + Uint32.BYTES)
     : srcByteCount;
   for (let i = 0; i < loopCount; i = i + Uint32.BYTES) {
+    let s = false;
     let uint32: number;
     if ((srcByteCount - i) < Uint32.BYTES) {
+      console.log(`${srcByteCount} - ${i} = ${srcByteCount - i}`);
       // 4バイトで割り切れない場合TextDecode("utf-16xx")に合わせる
       if (options.fatal === true) {
         throw new TypeError(`decode-error: invalid data`);
       } else {
-        // 端数バイトはU+FFFDにする）
+        // 端数バイトはU+FFFDにデコードする）
+        s = true;
         uint32 = Number.NaN;
       }
     } else {
@@ -56,7 +59,7 @@ function _decodeShared(
     read = read + Uint32.BYTES;
 
     if (CodePoint.isCodePoint(uint32)) {
-      dstRunes.push(String.fromCharCode(uint32));
+      dstRunes.push(String.fromCodePoint(uint32));
       written = written + 1;
     } else {
       if (options.fatal === true) {
@@ -69,6 +72,10 @@ function _decodeShared(
         dstRunes.push(options.replacementRune);
         written = written + 1;
       }
+    }
+
+    if (s === true) {
+      break;
     }
   }
 
