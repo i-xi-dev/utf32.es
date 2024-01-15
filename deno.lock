@@ -58,9 +58,9 @@
     "https://raw.githubusercontent.com/i-xi-dev/string.es/6.0.1/src/isomorphic.ts": "f5d1fc8bc7a7b7be3c5fe492d1c003ee597ca72a6c23282e30094b99fc428a92",
     "https://raw.githubusercontent.com/i-xi-dev/string.es/6.0.1/src/main.ts": "a3d1a773b26b408fbb1e3abdd66812f6f02b33edb49588f09701efdd57070441",
     "https://raw.githubusercontent.com/i-xi-dev/string.es/6.0.1/src/rune.ts": "bb609fbca9554b4f341ad45ac6c7f32b4a472f34f49699e7b180b87b3abc56da",
-    "https://raw.githubusercontent.com/i-xi-dev/text-encoding.es/4.2.0/deps.ts": "01c27dcee0fd3ed0b81ad513ae28c384dded18b761990482e125501022e95cf3",
-    "https://raw.githubusercontent.com/i-xi-dev/text-encoding.es/4.2.0/mod.ts": "cc6977e69300e513c7256d93e2f548a098543b33fa3957f74e45a43403485e04",
-    "https://raw.githubusercontent.com/i-xi-dev/text-encoding.es/4.2.0/src/main.ts": "8c6df94a729a50d1c91d88e361221ee5c7aead54333a82131574fe5639008dcf",
-    "https://raw.githubusercontent.com/i-xi-dev/text-encoding.es/4.2.0/src/us_ascii.ts": "22545f7e6d291fd5a6b73e95c5aced0cbf11b71069dd957c65a9b0ae46ea6b4a"
+    "https://raw.githubusercontent.com/i-xi-dev/text-encoding.es/5.0.0/deps.ts": "01c27dcee0fd3ed0b81ad513ae28c384dded18b761990482e125501022e95cf3",
+    "https://raw.githubusercontent.com/i-xi-dev/text-encoding.es/5.0.0/mod.ts": "cc6977e69300e513c7256d93e2f548a098543b33fa3957f74e45a43403485e04",
+    "https://raw.githubusercontent.com/i-xi-dev/text-encoding.es/5.0.0/src/main.ts": "5852fa91a066b12fca8524762dde80b8067fa069175a701a0a39ecac3c5bdc4e",
+    "https://raw.githubusercontent.com/i-xi-dev/text-encoding.es/5.0.0/src/us_ascii.ts": "b848c43cd915f670760198ec39863c1cd5cdb92cd47d482b53f145f281f4d40c"
   }
 }
