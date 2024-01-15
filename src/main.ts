@@ -1,6 +1,7 @@
 import {
   CodePoint,
   Rune,
+  SafeInteger,
   StringEx,
   TextEncoding,
   Uint32,
@@ -13,6 +14,49 @@ const _LE_LABEL = "UTF-32LE";
 const _MAX_BYTES_PER_RUNE = 4;
 
 type _RuneBytes = Array<Uint8>; // [Uint8, Uint8, Uint8, Uint8] ;
+
+function _decodeShared(
+  srcBuffer: ArrayBuffer,
+  dstRunes: Array<Rune>,
+  options: {
+    fatal: boolean;
+    replacementRune: Rune;
+  },
+  littleEndian: boolean,
+): {
+  read: SafeInteger;
+  written: SafeInteger;
+} {
+  //
+}
+
+function _decodeBe(
+  srcBuffer: ArrayBuffer,
+  dstRunes: Array<Rune>,
+  options: {
+    fatal: boolean;
+    replacementRune: Rune;
+  },
+): {
+  read: SafeInteger;
+  written: SafeInteger;
+} {
+  return _decodeShared(srcBuffer, dstRunes, options, false);
+}
+
+function _decodeLe(
+  srcBuffer: ArrayBuffer,
+  dstRunes: Array<Rune>,
+  options: {
+    fatal: boolean;
+    replacementRune: Rune;
+  },
+): {
+  read: SafeInteger;
+  written: SafeInteger;
+} {
+  return _decodeShared(srcBuffer, dstRunes, options, true);
+}
 
 function _encodeShared(
   srcString: string,
@@ -124,6 +168,42 @@ function _getReplacement(
 }
 
 export namespace Utf32 {
+  export type DecoderOptions = {
+    fatal?: boolean;
+    ignoreBOM?: boolean;
+    strict?: boolean;
+  };
+
+  /** @deprecated */
+  export class BEDecoder extends TextEncoding.Decoder {
+    constructor(options: DecoderOptions = {}) {
+      super({
+        name: _BE_LABEL,
+        fatal: options?.fatal === true,
+        replacementRune: _getReplacement(_DEFAULT_REPLACEMENT_CHAR, false).rune,
+        decode: _decodeBe,
+        ignoreBOM: options?.ignoreBOM === true,
+        strict: options?.strict === true,
+        maxBytesPerRune: _MAX_BYTES_PER_RUNE,
+      });
+    }
+  }
+
+  /** @deprecated */
+  export class LEDecoder extends TextEncoding.Decoder {
+    constructor(options: DecoderOptions = {}) {
+      super({
+        name: _LE_LABEL,
+        fatal: options?.fatal === true,
+        replacementRune: _getReplacement(_DEFAULT_REPLACEMENT_CHAR, true).rune,
+        decode: _decodeLe,
+        ignoreBOM: options?.ignoreBOM === true,
+        strict: options?.strict === true,
+        maxBytesPerRune: _MAX_BYTES_PER_RUNE,
+      });
+    }
+  }
+
   export type EncoderOptions = {
     fatal?: boolean;
     prependBOM?: boolean;
