@@ -27,7 +27,55 @@ function _decodeShared(
   read: SafeInteger;
   written: SafeInteger;
 } {
-  //
+  const srcView = new DataView(srcBuffer);
+
+  let read = 0;
+  let written = 0;
+
+  const srcByteCount = srcView.byteLength;
+  const loopCount = (srcByteCount % Uint32.BYTES)
+    ? (srcByteCount + Uint32.BYTES)
+    : srcByteCount;
+  for (let i = 0; i < loopCount; i = i + Uint32.BYTES) {
+    let uint32: number;
+    if ((srcByteCount - i) < Uint32.BYTES) {
+      // 4バイトで割り切れない場合TextDecode("utf-16xx")に合わせる
+      if (options.fatal === true) {
+        throw new TypeError(`decode-error: invalid data`);
+      } else {
+        // 端数バイトはU+FFFDにする）
+        uint32 = Number.NaN;
+      }
+    } else {
+      uint32 = srcView.getUint32(i, littleEndian);
+    }
+
+    // if ((written + 1) > xxx) {
+    //   break;
+    // }
+    read = read + Uint32.BYTES;
+
+    if (CodePoint.isCodePoint(uint32)) {
+      dstRunes.push(String.fromCharCode(uint32));
+      written = written + 1;
+    } else {
+      if (options.fatal === true) {
+        throw new TypeError(
+          `decode-error: 0x${
+            (uint32 as number).toString(16).toUpperCase().padStart(8, "0")
+          }`, //TODO number-format
+        );
+      } else {
+        dstRunes.push(options.replacementRune);
+        written = written + 1;
+      }
+    }
+  }
+
+  return {
+    read,
+    written,
+  };
 }
 
 function _decodeBe(
