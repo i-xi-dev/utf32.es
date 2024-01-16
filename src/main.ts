@@ -19,6 +19,7 @@ function _decodeShared(
   srcBuffer: ArrayBuffer,
   dstRunes: Array<Rune>,
   options: {
+    allowPending: boolean;
     fatal: boolean;
     replacementRune: Rune;
   },
@@ -26,11 +27,13 @@ function _decodeShared(
 ): {
   read: SafeInteger;
   written: SafeInteger;
+  pending: Array<Uint8>;
 } {
   const srcView = new DataView(srcBuffer);
 
   let read = 0;
   let written = 0;
+  const pending: Array<Uint8> = [];
 
   const srcByteCount = srcView.byteLength;
   const loopCount = (srcByteCount % Uint32.BYTES)
@@ -40,14 +43,20 @@ function _decodeShared(
     let s = false;
     let uint32: number;
     if ((srcByteCount - i) < Uint32.BYTES) {
-      console.log(`${srcByteCount} - ${i} = ${srcByteCount - i}`);
-      // 4バイトで割り切れない場合TextDecode("utf-16xx")に合わせる
-      if (options.fatal === true) {
-        throw new TypeError(`decode-error: invalid data`);
+      if (options.allowPending === true) {
+        for (let j = i; j < srcByteCount; j++) {
+          pending.push(srcView.getUint8(j) as Uint8);
+        }
+        break;
       } else {
-        // 端数バイトはU+FFFDにデコードする）
-        s = true;
-        uint32 = Number.NaN;
+        // 4バイトで割り切れない場合TextDecode("utf-16xx")に合わせる
+        if (options.fatal === true) {
+          throw new TypeError(`decode-error: invalid data`);
+        } else {
+          // 端数バイトはU+FFFDにデコードする）
+          s = true;
+          uint32 = Number.NaN;
+        }
       }
     } else {
       uint32 = srcView.getUint32(i, littleEndian);
@@ -82,6 +91,7 @@ function _decodeShared(
   return {
     read,
     written,
+    pending,
   };
 }
 
@@ -89,12 +99,14 @@ function _decodeBe(
   srcBuffer: ArrayBuffer,
   dstRunes: Array<Rune>,
   options: {
+    allowPending: boolean;
     fatal: boolean;
     replacementRune: Rune;
   },
 ): {
   read: SafeInteger;
   written: SafeInteger;
+  pending: Array<Uint8>;
 } {
   return _decodeShared(srcBuffer, dstRunes, options, false);
 }
@@ -103,12 +115,14 @@ function _decodeLe(
   srcBuffer: ArrayBuffer,
   dstRunes: Array<Rune>,
   options: {
+    allowPending: boolean;
     fatal: boolean;
     replacementRune: Rune;
   },
 ): {
   read: SafeInteger;
   written: SafeInteger;
+  pending: Array<Uint8>;
 } {
   return _decodeShared(srcBuffer, dstRunes, options, true);
 }
@@ -226,38 +240,13 @@ export namespace Utf32 {
   export type DecoderOptions = {
     fatal?: boolean;
     ignoreBOM?: boolean;
-    strict?: boolean;
+    // strict?: boolean;
   };
 
-  /** @deprecated */
-  export class BEDecoder extends TextEncoding.Decoder {
-    constructor(options: DecoderOptions = {}) {
-      super({
-        name: _BE_LABEL,
-        fatal: options?.fatal === true,
-        replacementRune: _getReplacement(_DEFAULT_REPLACEMENT_CHAR, false).rune,
-        decode: _decodeBe,
-        ignoreBOM: options?.ignoreBOM === true,
-        strict: options?.strict === true,
-        maxBytesPerRune: _MAX_BYTES_PER_RUNE,
-      });
-    }
-  }
-
-  /** @deprecated */
-  export class LEDecoder extends TextEncoding.Decoder {
-    constructor(options: DecoderOptions = {}) {
-      super({
-        name: _LE_LABEL,
-        fatal: options?.fatal === true,
-        replacementRune: _getReplacement(_DEFAULT_REPLACEMENT_CHAR, true).rune,
-        decode: _decodeLe,
-        ignoreBOM: options?.ignoreBOM === true,
-        strict: options?.strict === true,
-        maxBytesPerRune: _MAX_BYTES_PER_RUNE,
-      });
-    }
-  }
+  // /** @deprecated */
+  // export class Decoder extends TextEncoding.Decoder {
+  // BOMで判定してデコード、BOMが無ければエラー
+  // }
 
   export type EncoderOptions = {
     fatal?: boolean;
@@ -265,105 +254,113 @@ export namespace Utf32 {
     strict?: boolean;
   };
 
-  /** @deprecated */
-  export class BEEncoder extends TextEncoding.Encoder {
-    constructor(options: EncoderOptions = {}) {
-      super({
-        name: _BE_LABEL,
-        fatal: options?.fatal === true,
-        replacementBytes:
-          _getReplacement(_DEFAULT_REPLACEMENT_CHAR, false).bytes,
-        encode: _encodeBe,
-        prependBOM: options?.prependBOM === true,
-        strict: options?.strict === true,
-        maxBytesPerRune: _MAX_BYTES_PER_RUNE,
-      });
+  // /** @deprecated */
+  // export class Encoder extends TextEncoding.Encoder {
+  // プラットフォームのバイトオーダーでエンコード
+  // }
+
+  // /** @deprecated */
+  // export class EncoderStream extends TextEncoding.EncoderStream {
+  // プラットフォームのバイトオーダーでエンコード
+  // }
+
+  export namespace Be {
+    /** @deprecated */
+    export class Decoder extends TextEncoding.Decoder {
+      constructor(options: DecoderOptions = {}) {
+        super({
+          name: _BE_LABEL,
+          fatal: options?.fatal === true,
+          replacementRune:
+            _getReplacement(_DEFAULT_REPLACEMENT_CHAR, false).rune,
+          decode: _decodeBe,
+          ignoreBOM: options?.ignoreBOM === true,
+          // strict: options?.strict === true,
+          maxBytesPerRune: _MAX_BYTES_PER_RUNE,
+        });
+      }
+    }
+
+    /** @deprecated */
+    export class Encoder extends TextEncoding.Encoder {
+      constructor(options: EncoderOptions = {}) {
+        super({
+          name: _BE_LABEL,
+          fatal: options?.fatal === true,
+          replacementBytes:
+            _getReplacement(_DEFAULT_REPLACEMENT_CHAR, false).bytes,
+          encode: _encodeBe,
+          prependBOM: options?.prependBOM === true,
+          strict: options?.strict === true,
+          maxBytesPerRune: _MAX_BYTES_PER_RUNE,
+        });
+      }
+    }
+
+    /** @deprecated */
+    export class EncoderStream extends TextEncoding.EncoderStream {
+      constructor(options: EncoderOptions = {}) {
+        super({
+          name: _BE_LABEL,
+          fatal: options?.fatal === true,
+          replacementBytes:
+            _getReplacement(_DEFAULT_REPLACEMENT_CHAR, false).bytes,
+          encode: _encodeBe,
+          prependBOM: options?.prependBOM === true,
+          strict: options?.strict === true,
+          maxBytesPerRune: _MAX_BYTES_PER_RUNE,
+        });
+      }
     }
   }
 
-  /** @deprecated */
-  export class LEEncoder extends TextEncoding.Encoder {
-    constructor(options: EncoderOptions = {}) {
-      super({
-        name: _LE_LABEL,
-        fatal: options?.fatal === true,
-        replacementBytes:
-          _getReplacement(_DEFAULT_REPLACEMENT_CHAR, true).bytes,
-        encode: _encodeLe,
-        prependBOM: options?.prependBOM === true,
-        strict: options?.strict === true,
-        maxBytesPerRune: _MAX_BYTES_PER_RUNE,
-      });
+  export namespace Le {
+    /** @deprecated */
+    export class Decoder extends TextEncoding.Decoder {
+      constructor(options: DecoderOptions = {}) {
+        super({
+          name: _LE_LABEL,
+          fatal: options?.fatal === true,
+          replacementRune:
+            _getReplacement(_DEFAULT_REPLACEMENT_CHAR, true).rune,
+          decode: _decodeLe,
+          ignoreBOM: options?.ignoreBOM === true,
+          // strict: options?.strict === true,
+          maxBytesPerRune: _MAX_BYTES_PER_RUNE,
+        });
+      }
     }
-  }
 
-  /** @deprecated */
-  export class BEEncoderStream extends TextEncoding.EncoderStream {
-    constructor(options: EncoderOptions = {}) {
-      super({
-        name: _BE_LABEL,
-        fatal: options?.fatal === true,
-        replacementBytes:
-          _getReplacement(_DEFAULT_REPLACEMENT_CHAR, false).bytes,
-        encode: _encodeBe,
-        prependBOM: options?.prependBOM === true,
-        strict: options?.strict === true,
-        maxBytesPerRune: _MAX_BYTES_PER_RUNE,
-      });
+    /** @deprecated */
+    export class Encoder extends TextEncoding.Encoder {
+      constructor(options: EncoderOptions = {}) {
+        super({
+          name: _LE_LABEL,
+          fatal: options?.fatal === true,
+          replacementBytes:
+            _getReplacement(_DEFAULT_REPLACEMENT_CHAR, true).bytes,
+          encode: _encodeLe,
+          prependBOM: options?.prependBOM === true,
+          strict: options?.strict === true,
+          maxBytesPerRune: _MAX_BYTES_PER_RUNE,
+        });
+      }
     }
-  }
 
-  /** @deprecated */
-  export class LEEncoderStream extends TextEncoding.EncoderStream {
-    constructor(options: EncoderOptions = {}) {
-      super({
-        name: _LE_LABEL,
-        fatal: options?.fatal === true,
-        replacementBytes:
-          _getReplacement(_DEFAULT_REPLACEMENT_CHAR, true).bytes,
-        encode: _encodeLe,
-        prependBOM: options?.prependBOM === true,
-        strict: options?.strict === true,
-        maxBytesPerRune: _MAX_BYTES_PER_RUNE,
-      });
+    /** @deprecated */
+    export class EncoderStream extends TextEncoding.EncoderStream {
+      constructor(options: EncoderOptions = {}) {
+        super({
+          name: _LE_LABEL,
+          fatal: options?.fatal === true,
+          replacementBytes:
+            _getReplacement(_DEFAULT_REPLACEMENT_CHAR, true).bytes,
+          encode: _encodeLe,
+          prependBOM: options?.prependBOM === true,
+          strict: options?.strict === true,
+          maxBytesPerRune: _MAX_BYTES_PER_RUNE,
+        });
+      }
     }
   }
 }
-
-// function _decode(
-//   label: string,
-//   input: BufferSource,
-//   options: Encoding.DecodeOptions,
-// ): string {
-//   let view: DataView;
-//   if (ArrayBuffer.isView(input)) {
-//     view = new DataView(input.buffer);
-//   } else if (input instanceof ArrayBuffer) {
-//     view = new DataView(input);
-//   } else {
-//     throw new TypeError("input");
-//   }
-
-//   if (view.byteLength % Uint32.BYTES !== 0) {
-//     throw new TypeError("input");
-//   }
-
-//   const runes = [];
-//   let codePoint: number;
-//   for (let i = 0; i < view.byteLength; i = i + Uint32.BYTES) {
-//     codePoint = view.getUint32(i, label === _LE_LABEL);
-//     if (CodePoint.isCodePoint(codePoint) !== true) {
-//       throw new TypeError("input[*]");
-//     }
-//     runes.push(
-//       String.fromCodePoint(codePoint),
-//     );
-//   }
-
-//   const str = runes.join("");
-//   if (options?.ignoreBOM === true) {
-//     return str;
-//   } else {
-//     return str.startsWith(BOM) ? str.substring(1) : str;
-//   }
-// }

@@ -8,23 +8,23 @@ if (!globalThis.ReadableStream) {
   globalThis.WritableStream = nsw.WritableStream;
 }
 
-Deno.test("Utf32.LEEncoderStream.prototype.encoding", () => {
-  const encoder = new Utf32.LEEncoderStream();
+Deno.test("Utf32.Le.EncoderStream.prototype.encoding", () => {
+  const encoder = new Utf32.Le.EncoderStream();
   assertStrictEquals(encoder.encoding, "utf-32le");
 });
 
-Deno.test("Utf32.LEEncoderStream.prototype.fatal", () => {
-  const encoder1 = new Utf32.LEEncoderStream({ fatal: true });
+Deno.test("Utf32.Le.EncoderStream.prototype.fatal", () => {
+  const encoder1 = new Utf32.Le.EncoderStream({ fatal: true });
   assertStrictEquals(encoder1.fatal, true);
 
-  const encoder2 = new Utf32.LEEncoderStream({ fatal: false });
+  const encoder2 = new Utf32.Le.EncoderStream({ fatal: false });
   assertStrictEquals(encoder2.fatal, false);
 
-  const encoder3 = new Utf32.LEEncoderStream();
+  const encoder3 = new Utf32.Le.EncoderStream();
   assertStrictEquals(encoder3.fatal, false);
 });
 
-Deno.test("Utf32.LEEncoderStream.prototype.writable", async () => {
+Deno.test("Utf32.Le.EncoderStream.prototype.writable", async () => {
   const td = [
     "ABC",
     "あ",
@@ -70,7 +70,7 @@ Deno.test("Utf32.LEEncoderStream.prototype.writable", async () => {
     });
   })();
 
-  const encoder1 = new Utf32.LEEncoderStream();
+  const encoder1 = new Utf32.Le.EncoderStream();
 
   const result = new Uint8Array(80);
   let written = 0;
@@ -108,7 +108,7 @@ Deno.test("Utf32.LEEncoderStream.prototype.writable", async () => {
   );
 });
 
-Deno.test("Utf32.LEEncoderStream.prototype.writable - 2", async () => {
+Deno.test("Utf32.Le.EncoderStream.prototype.writable - 2", async () => {
   const td = [
     "ABC",
     "あ",
@@ -154,7 +154,7 @@ Deno.test("Utf32.LEEncoderStream.prototype.writable - 2", async () => {
     });
   })();
 
-  const encoder1 = new Utf32.LEEncoderStream();
+  const encoder1 = new Utf32.Le.EncoderStream();
 
   const result = new Uint8Array(80);
   let written = 0;

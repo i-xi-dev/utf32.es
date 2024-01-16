@@ -8,23 +8,23 @@ if (!globalThis.ReadableStream) {
   globalThis.WritableStream = nsw.WritableStream;
 }
 
-Deno.test("Utf32.BEEncoderStream.prototype.encoding", () => {
-  const encoder = new Utf32.BEEncoderStream();
+Deno.test("Utf32.Be.EncoderStream.prototype.encoding", () => {
+  const encoder = new Utf32.Be.EncoderStream();
   assertStrictEquals(encoder.encoding, "utf-32be");
 });
 
-Deno.test("Utf32.BEEncoderStream.prototype.fatal", () => {
-  const encoder1 = new Utf32.BEEncoderStream({ fatal: true });
+Deno.test("Utf32.Be.EncoderStream.prototype.fatal", () => {
+  const encoder1 = new Utf32.Be.EncoderStream({ fatal: true });
   assertStrictEquals(encoder1.fatal, true);
 
-  const encoder2 = new Utf32.BEEncoderStream({ fatal: false });
+  const encoder2 = new Utf32.Be.EncoderStream({ fatal: false });
   assertStrictEquals(encoder2.fatal, false);
 
-  const encoder3 = new Utf32.BEEncoderStream();
+  const encoder3 = new Utf32.Be.EncoderStream();
   assertStrictEquals(encoder3.fatal, false);
 });
 
-Deno.test("Utf32.BEEncoderStream.prototype.writable", async () => {
+Deno.test("Utf32.Be.EncoderStream.prototype.writable", async () => {
   const td = [
     "ABC",
     "あ",
@@ -70,7 +70,7 @@ Deno.test("Utf32.BEEncoderStream.prototype.writable", async () => {
     });
   })();
 
-  const encoder1 = new Utf32.BEEncoderStream();
+  const encoder1 = new Utf32.Be.EncoderStream();
 
   const result = new Uint8Array(80);
   let written = 0;
@@ -108,7 +108,7 @@ Deno.test("Utf32.BEEncoderStream.prototype.writable", async () => {
   );
 });
 
-Deno.test("Utf32.BEEncoderStream.prototype.writable - 2", async () => {
+Deno.test("Utf32.Be.EncoderStream.prototype.writable - 2", async () => {
   const td = [
     "ABC",
     "あ",
@@ -154,7 +154,7 @@ Deno.test("Utf32.BEEncoderStream.prototype.writable - 2", async () => {
     });
   })();
 
-  const encoder1 = new Utf32.BEEncoderStream();
+  const encoder1 = new Utf32.Be.EncoderStream();
 
   const result = new Uint8Array(80);
   let written = 0;

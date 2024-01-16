@@ -1,8 +1,8 @@
 import { assertStrictEquals, assertThrows } from "../deps.ts";
 import { Utf32 } from "../../mod.ts";
 
-Deno.test("Utf32.BEDecoder.decode(BufferSource)", () => {
-  const decoder = new Utf32.BEDecoder();
+Deno.test("Utf32.Be.Decoder.decode(BufferSource)", () => {
+  const decoder = new Utf32.Be.Decoder();
 
   // decode()
   assertStrictEquals(decoder.decode(), "");
@@ -142,8 +142,8 @@ Deno.test("Utf32.BEDecoder.decode(BufferSource)", () => {
   );
 });
 
-Deno.test("Utf32.BEDecoder.decode(BufferSource) - fatal", () => {
-  const decoder = new Utf32.BEDecoder({ fatal: true });
+Deno.test("Utf32.Be.Decoder.decode(BufferSource) - fatal", () => {
+  const decoder = new Utf32.Be.Decoder({ fatal: true });
 
   // decode()
   assertStrictEquals(decoder.decode(), "");
@@ -272,8 +272,8 @@ Deno.test("Utf32.BEDecoder.decode(BufferSource) - fatal", () => {
   );
 });
 
-Deno.test("Utf32.BEDecoder.decode(BufferSource, {})", () => {
-  const decoder = new Utf32.BEDecoder({ ignoreBOM: true });
+Deno.test("Utf32.Be.Decoder.decode(BufferSource, {})", () => {
+  const decoder = new Utf32.Be.Decoder({ ignoreBOM: true });
 
   // decode()
   assertStrictEquals(decoder.decode(undefined), "");

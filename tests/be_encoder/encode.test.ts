@@ -1,8 +1,8 @@
 import { assertStrictEquals, assertThrows } from "../deps.ts";
 import { Utf32 } from "../../mod.ts";
 
-Deno.test("Utf32.BEEncoder.encode(string)", () => {
-  const encoder = new Utf32.BEEncoder();
+Deno.test("Utf32.Be.Encoder.encode(string)", () => {
+  const encoder = new Utf32.Be.Encoder();
 
   // encode()
   assertStrictEquals(JSON.stringify([...encoder.encode()]), "[]");
@@ -59,8 +59,8 @@ Deno.test("Utf32.BEEncoder.encode(string)", () => {
   );
 });
 
-Deno.test("Utf32.BEEncoder.encode(string) - strict", () => {
-  const encoder = new Utf32.BEEncoder({ strict: true });
+Deno.test("Utf32.Be.Encoder.encode(string) - strict", () => {
+  const encoder = new Utf32.Be.Encoder({ strict: true });
 
   // encode()
   assertThrows(
@@ -126,8 +126,8 @@ Deno.test("Utf32.BEEncoder.encode(string) - strict", () => {
   );
 });
 
-Deno.test("Utf32.BEEncoder.encode(string) - prependBOM", () => {
-  const encoder = new Utf32.BEEncoder({ prependBOM: true });
+Deno.test("Utf32.Be.Encoder.encode(string) - prependBOM", () => {
+  const encoder = new Utf32.Be.Encoder({ prependBOM: true });
 
   // encode()
   assertStrictEquals(
@@ -190,8 +190,8 @@ Deno.test("Utf32.BEEncoder.encode(string) - prependBOM", () => {
   );
 });
 
-Deno.test("Utf32.BEEncoder.encode(string) - fatal", () => {
-  const encoder = new Utf32.BEEncoder({ fatal: true });
+Deno.test("Utf32.Be.Encoder.encode(string) - fatal", () => {
+  const encoder = new Utf32.Be.Encoder({ fatal: true });
 
   // encode()
   assertStrictEquals(JSON.stringify([...encoder.encode()]), "[]");

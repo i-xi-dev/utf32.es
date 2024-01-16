@@ -1,8 +1,8 @@
 import { assertStrictEquals, assertThrows } from "../deps.ts";
 import { Utf32 } from "../../mod.ts";
 
-Deno.test("Utf32.LEDecoder.decode(BufferSource)", () => {
-  const decoder = new Utf32.LEDecoder();
+Deno.test("Utf32.Le.Decoder.decode(BufferSource)", () => {
+  const decoder = new Utf32.Le.Decoder();
 
   // decode()
   assertStrictEquals(decoder.decode(), "");
@@ -142,8 +142,8 @@ Deno.test("Utf32.LEDecoder.decode(BufferSource)", () => {
   );
 });
 
-Deno.test("Utf32.LEDecoder.decode(BufferSource) - fatal", () => {
-  const decoder = new Utf32.LEDecoder({ fatal: true });
+Deno.test("Utf32.Le.Decoder.decode(BufferSource) - fatal", () => {
+  const decoder = new Utf32.Le.Decoder({ fatal: true });
 
   // decode()
   assertStrictEquals(decoder.decode(), "");
@@ -272,8 +272,8 @@ Deno.test("Utf32.LEDecoder.decode(BufferSource) - fatal", () => {
   );
 });
 
-Deno.test("Utf32.LEDecoder.decode(BufferSource, {})", () => {
-  const decoder = new Utf32.LEDecoder({ ignoreBOM: true });
+Deno.test("Utf32.Le.Decoder.decode(BufferSource, {})", () => {
+  const decoder = new Utf32.Le.Decoder({ ignoreBOM: true });
 
   // decode()
   assertStrictEquals(decoder.decode(undefined), "");

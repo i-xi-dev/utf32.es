@@ -1,8 +1,8 @@
 import { assertStrictEquals, assertThrows } from "../deps.ts";
 import { Utf32 } from "../../mod.ts";
 
-Deno.test("Utf32.LEEncoder.encode(string)", () => {
-  const encoder = new Utf32.LEEncoder();
+Deno.test("Utf32.Le.Encoder.encode(string)", () => {
+  const encoder = new Utf32.Le.Encoder();
 
   // encode()
   assertStrictEquals(JSON.stringify([...encoder.encode()]), "[]");
@@ -59,8 +59,8 @@ Deno.test("Utf32.LEEncoder.encode(string)", () => {
   );
 });
 
-Deno.test("Utf32.LEEncoder.encode(string) - strict", () => {
-  const encoder = new Utf32.LEEncoder({ strict: true });
+Deno.test("Utf32.Le.Encoder.encode(string) - strict", () => {
+  const encoder = new Utf32.Le.Encoder({ strict: true });
 
   // encode()
   assertThrows(
@@ -126,8 +126,8 @@ Deno.test("Utf32.LEEncoder.encode(string) - strict", () => {
   );
 });
 
-Deno.test("Utf32.LEEncoder.encode(string) - prependBOM", () => {
-  const encoder = new Utf32.LEEncoder({ prependBOM: true });
+Deno.test("Utf32.Le.Encoder.encode(string) - prependBOM", () => {
+  const encoder = new Utf32.Le.Encoder({ prependBOM: true });
 
   // encode()
   assertStrictEquals(
@@ -190,8 +190,8 @@ Deno.test("Utf32.LEEncoder.encode(string) - prependBOM", () => {
   );
 });
 
-Deno.test("Utf32.LEEncoder.encode(string) - fatal", () => {
-  const encoder = new Utf32.LEEncoder({ fatal: true });
+Deno.test("Utf32.Le.Encoder.encode(string) - fatal", () => {
+  const encoder = new Utf32.Le.Encoder({ fatal: true });
 
   // encode()
   assertStrictEquals(JSON.stringify([...encoder.encode()]), "[]");
