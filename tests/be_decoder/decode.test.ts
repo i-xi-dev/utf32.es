@@ -272,7 +272,7 @@ Deno.test("Utf32.Be.Decoder.decode(BufferSource) - fatal", () => {
   );
 });
 
-Deno.test("Utf32.Be.Decoder.decode(BufferSource, {})", () => {
+Deno.test("Utf32.Be.Decoder.decode(BufferSource) - ignoreBOM", () => {
   const decoder = new Utf32.Be.Decoder({ ignoreBOM: true });
 
   // decode()
