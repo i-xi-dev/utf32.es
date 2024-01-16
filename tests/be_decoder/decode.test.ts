@@ -398,3 +398,67 @@ Deno.test("Utf32.Be.Decoder.decode(BufferSource) - ignoreBOM", () => {
 //   const encoded1 = Utf32be.encode(str1);
 //   assertStrictEquals(Utf32be.decode(encoded1), str1);
 // });
+
+Deno.test("Utf32.Be.Decoder.decode(BufferSource, {}) - stream", () => {
+  const op = { stream: true };
+
+  const decoder1 = new Utf32.Be.Decoder();
+  assertStrictEquals(decoder1.decode(new ArrayBuffer(0), op), "");
+  assertStrictEquals(decoder1.decode(), "");
+
+  const decoder2 = new Utf32.Be.Decoder();
+  assertStrictEquals(
+    decoder2.decode(
+      Uint8Array.of(0, 0, 0, 0x41, 0, 0, 0, 0x42, 0, 0, 0, 0x43, 0, 0, 0, 0x44)
+        .buffer,
+      op,
+    ),
+    "ABCD",
+  );
+  assertStrictEquals(decoder2.decode(), "");
+
+  const decoder3 = new Utf32.Be.Decoder();
+  assertStrictEquals(
+    decoder3.decode(
+      Uint8Array.of(0, 0, 0, 0x41, 0, 0, 0, 0x42, 0, 0, 0, 0x43, 0)
+        .buffer,
+      op,
+    ),
+    "ABC",
+  );
+  assertStrictEquals(decoder3.decode(undefined, op), "");
+  assertStrictEquals(decoder3.decode(Uint8Array.of(0, 0, 0x44).buffer), "D");
+
+  assertStrictEquals(
+    decoder3.decode(
+      Uint8Array.of(0, 0, 0, 0x41, 0, 0, 0, 0x42, 0, 0, 0, 0x43, 0, 0)
+        .buffer,
+      op,
+    ),
+    "ABC",
+  );
+  assertStrictEquals(decoder3.decode(undefined, op), "");
+  assertStrictEquals(decoder3.decode(Uint8Array.of(0, 0x44).buffer), "D");
+
+  assertStrictEquals(
+    decoder3.decode(
+      Uint8Array.of(0, 0, 0, 0x41, 0, 0, 0, 0x42, 0, 0, 0, 0x43, 0, 0, 0)
+        .buffer,
+      op,
+    ),
+    "ABC",
+  );
+  assertStrictEquals(decoder3.decode(undefined, op), "");
+  assertStrictEquals(decoder3.decode(Uint8Array.of(0x44).buffer), "D");
+
+  assertStrictEquals(
+    decoder3.decode(
+      Uint8Array.of(0, 0, 0, 0x41, 0, 0, 0, 0x42, 0, 0, 0, 0x43, 0, 0, 0, 0x44)
+        .buffer,
+      op,
+    ),
+    "ABCD",
+  );
+  assertStrictEquals(decoder3.decode(undefined, op), "");
+  assertStrictEquals(decoder3.decode(), "");
+});
