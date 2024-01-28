@@ -81,7 +81,6 @@ Deno.test("Utf32.Le.EncoderStream.prototype.readable,writable - fatal:false", as
     },
   });
   await s.pipeThrough(encoder1).pipeTo(ws);
-  await s.pipeTo(ws);
 
   const expected = "0x41,0x00,0x00,0x00,0x42," +
     "0x00,0x00,0x00,0x43,0x00," +
@@ -165,7 +164,6 @@ Deno.test("Utf32.Le.EncoderStream.prototype.readable,writable - fatal:false(末�
     },
   });
   await s.pipeThrough(encoder1).pipeTo(ws);
-  await s.pipeTo(ws);
 
   const expected = "0x41,0x00,0x00,0x00,0x42," +
     "0x00,0x00,0x00,0x43,0x00," +
@@ -248,7 +246,6 @@ Deno.test("Utf32.Le.EncoderStream.prototype.readable,writable - fatal:false, pre
     },
   });
   await s.pipeThrough(encoder1).pipeTo(ws);
-  await s.pipeTo(ws);
 
   const expected = "0xFF,0xFE,0x00,0x00,0x41,0x00,0x00,0x00,0x42," +
     "0x00,0x00,0x00,0x43,0x00," +
@@ -332,7 +329,6 @@ Deno.test("Utf32.Le.EncoderStream.prototype.readable,writable - fatal:false, pre
     },
   });
   await s.pipeThrough(encoder1).pipeTo(ws);
-  await s.pipeTo(ws);
 
   const expected = "0xFF,0xFE,0x00,0x00,0x41,0x00,0x00,0x00,0x42," +
     "0x00,0x00,0x00,0x43,0x00," +
@@ -405,7 +401,7 @@ Deno.test("Utf32.Le.EncoderStream.prototype.readable,writable - fatal:true エ�
     });
   })();
 
-  const encoder1 = new Utf32.Le.EncoderStream();
+  const encoder1 = new Utf32.Le.EncoderStream({ fatal: true });
 
   const result = new Uint8Array(80);
   let written = 0;
@@ -416,7 +412,6 @@ Deno.test("Utf32.Le.EncoderStream.prototype.readable,writable - fatal:true エ�
     },
   });
   await s.pipeThrough(encoder1).pipeTo(ws);
-  await s.pipeTo(ws);
 
   const expected = "0x41,0x00,0x00,0x00,0x42," +
     "0x00,0x00,0x00,0x43,0x00," +
@@ -431,6 +426,200 @@ Deno.test("Utf32.Le.EncoderStream.prototype.readable,writable - fatal:true エ�
     "0x02,0x00,0x41,0x00,0x00," +
     "0x00,0x00,0x00,0x00,0x00," +
     "0x41,0x00,0x00,0x00,0x00," +
+    "0x00,0x00,0x00,0x00,0x00," +
+    "0x00,0x00,0x00,0x00,0x00," +
+    "0x00,0x00,0x00,0x00,0x00";
+
+  // assertStrictEquals(decoder.decode(result), td.join(""));
+  assertStrictEquals(
+    [...result].map((e) => "0x" + e.toString(16).toUpperCase().padStart(2, "0"))
+      .join(","),
+    expected,
+  );
+});
+
+Deno.test("Utf32.Le.EncoderStream.prototype.readable,writable - fatal:true 孤立サロゲートでエラー", async () => {
+  const td = [
+    "ABC",
+    "あ",
+    "\uD800",
+    "",
+    "A",
+
+    "\uD867\uDE3E",
+    "A",
+    "あ",
+    "A",
+    "AA",
+
+    "\uD867",
+    "\uDE3E",
+    "A",
+    "\u0000",
+    "A",
+  ];
+
+  // deno-lint-ignore no-explicit-any
+  let ti: any;
+  const s = new ReadableStream({
+    start(controller) {
+      let c = 0;
+      ti = setInterval(() => {
+        if (c >= 15) {
+          clearInterval(ti);
+          controller.close();
+          return;
+        }
+        controller.enqueue(td[c]);
+        c = c + 1;
+      }, 10);
+    },
+  });
+
+  await (() => {
+    return new Promise<void>((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, 200);
+    });
+  })();
+
+  const encoder1 = new Utf32.Le.EncoderStream({ fatal: true });
+
+  const result = new Uint8Array(80);
+  let written = 0;
+  const ws = new WritableStream({
+    write(chunk) {
+      result.set(chunk, written);
+      written = written + chunk.byteLength;
+    },
+    abort(reason) {
+      console.log("UnderlyingSink.abort");
+      //console.log(reason);
+      assertStrictEquals(reason.name, "TypeError");
+      assertStrictEquals(reason.message, "encode-error: U+D800");
+    },
+  });
+
+  try {
+    await s.pipeThrough(encoder1).pipeTo(ws);
+  } catch (e) {
+    console.log("try-catch");
+    //console.log(e);
+    assertStrictEquals(e.name, "TypeError");
+    assertStrictEquals(e.message, "encode-error: U+D800");
+  }
+
+  const expected = "0x41,0x00,0x00,0x00,0x42," +
+    "0x00,0x00,0x00,0x43,0x00," +
+    "0x00,0x00,0x42,0x30,0x00," +
+    "0x00,0x00,0x00,0x00,0x00," +
+    "0x00,0x00,0x00,0x00,0x00," +
+    "0x00,0x00,0x00,0x00,0x00," +
+    "0x00,0x00,0x00,0x00,0x00," +
+    "0x00,0x00,0x00,0x00,0x00," +
+    "0x00,0x00,0x00,0x00,0x00," +
+    "0x00,0x00,0x00,0x00,0x00," +
+    "0x00,0x00,0x00,0x00,0x00," +
+    "0x00,0x00,0x00,0x00,0x00," +
+    "0x00,0x00,0x00,0x00,0x00," +
+    "0x00,0x00,0x00,0x00,0x00," +
+    "0x00,0x00,0x00,0x00,0x00," +
+    "0x00,0x00,0x00,0x00,0x00";
+
+  // assertStrictEquals(decoder.decode(result), td.join(""));
+  assertStrictEquals(
+    [...result].map((e) => "0x" + e.toString(16).toUpperCase().padStart(2, "0"))
+      .join(","),
+    expected,
+  );
+});
+
+Deno.test("Utf32.Le.EncoderStream.prototype.readable,writable - fatal:true 孤立サロゲートでエラー", async () => {
+  const td = [
+    "ABC",
+    "あ",
+    "\uDC00",
+    "",
+    "A",
+
+    "\uD867\uDE3E",
+    "A",
+    "あ",
+    "A",
+    "AA",
+
+    "\uD867",
+    "\uDE3E",
+    "A",
+    "\u0000",
+    "A",
+  ];
+
+  // deno-lint-ignore no-explicit-any
+  let ti: any;
+  const s = new ReadableStream({
+    start(controller) {
+      let c = 0;
+      ti = setInterval(() => {
+        if (c >= 15) {
+          clearInterval(ti);
+          controller.close();
+          return;
+        }
+        controller.enqueue(td[c]);
+        c = c + 1;
+      }, 10);
+    },
+  });
+
+  await (() => {
+    return new Promise<void>((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, 200);
+    });
+  })();
+
+  const encoder1 = new Utf32.Le.EncoderStream({ fatal: true });
+
+  const result = new Uint8Array(80);
+  let written = 0;
+  const ws = new WritableStream({
+    write(chunk) {
+      result.set(chunk, written);
+      written = written + chunk.byteLength;
+    },
+    abort(reason) {
+      console.log("UnderlyingSink.abort");
+      //console.log(reason);
+      assertStrictEquals(reason.name, "TypeError");
+      assertStrictEquals(reason.message, "encode-error: U+DC00");
+    },
+  });
+
+  try {
+    await s.pipeThrough(encoder1).pipeTo(ws);
+  } catch (e) {
+    console.log("try-catch");
+    //console.log(e);
+    assertStrictEquals(e.name, "TypeError");
+    assertStrictEquals(e.message, "encode-error: U+DC00");
+  }
+
+  const expected = "0x41,0x00,0x00,0x00,0x42," +
+    "0x00,0x00,0x00,0x43,0x00," +
+    "0x00,0x00,0x42,0x30,0x00," +
+    "0x00,0x00,0x00,0x00,0x00," +
+    "0x00,0x00,0x00,0x00,0x00," +
+    "0x00,0x00,0x00,0x00,0x00," +
+    "0x00,0x00,0x00,0x00,0x00," +
+    "0x00,0x00,0x00,0x00,0x00," +
+    "0x00,0x00,0x00,0x00,0x00," +
+    "0x00,0x00,0x00,0x00,0x00," +
+    "0x00,0x00,0x00,0x00,0x00," +
+    "0x00,0x00,0x00,0x00,0x00," +
+    "0x00,0x00,0x00,0x00,0x00," +
     "0x00,0x00,0x00,0x00,0x00," +
     "0x00,0x00,0x00,0x00,0x00," +
     "0x00,0x00,0x00,0x00,0x00";

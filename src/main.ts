@@ -1,7 +1,6 @@
 import {
   CodePoint,
   Rune,
-  SafeInteger,
   StringEx,
   TextEncoding,
   Uint32,
@@ -15,6 +14,8 @@ const _MAX_BYTES_PER_RUNE = 4;
 
 type _RuneBytes = Array<Uint8>; // [Uint8, Uint8, Uint8, Uint8] ;
 
+//TODO プラットフォームのバイトオーダーでエンコード
+
 function _decodeShared(
   srcBuffer: ArrayBuffer,
   dstRunes: Array<Rune>,
@@ -24,16 +25,12 @@ function _decodeShared(
     replacementRune: Rune;
   },
   littleEndian: boolean,
-): {
-  read: SafeInteger;
-  written: SafeInteger;
-  pending: Array<Uint8>;
-} {
+): TextEncoding.DecodeResult {
   const srcView = new DataView(srcBuffer);
 
-  let read = 0;
-  let written = 0;
-  const pending: Array<Uint8> = [];
+  let readByteCount = 0;
+  let writtenRuneCount = 0;
+  const pendingBytes: Array<Uint8> = [];
 
   const srcByteCount = srcView.byteLength;
   const loopCount = (srcByteCount % Uint32.BYTES)
@@ -45,7 +42,7 @@ function _decodeShared(
     if ((srcByteCount - i) < Uint32.BYTES) {
       if (options.allowPending === true) {
         for (let j = i; j < srcByteCount; j++) {
-          pending.push(srcView.getUint8(j) as Uint8);
+          pendingBytes.push(srcView.getUint8(j) as Uint8);
         }
         break;
       } else {
@@ -62,14 +59,14 @@ function _decodeShared(
       uint32 = srcView.getUint32(i, littleEndian);
     }
 
-    // if ((written + 1) > xxx) {
+    // if ((writtenRuneCount + 1) > xxx) {
     //   break;
     // }
-    read = read + Uint32.BYTES;
+    readByteCount = readByteCount + Uint32.BYTES;
 
     if (CodePoint.isCodePoint(uint32)) {
       dstRunes.push(String.fromCodePoint(uint32));
-      written = written + 1;
+      writtenRuneCount = writtenRuneCount + 1;
     } else {
       if (options.fatal === true) {
         throw new TypeError(
@@ -79,7 +76,7 @@ function _decodeShared(
         );
       } else {
         dstRunes.push(options.replacementRune);
-        written = written + 1;
+        writtenRuneCount = writtenRuneCount + 1;
       }
     }
 
@@ -89,9 +86,9 @@ function _decodeShared(
   }
 
   return {
-    read,
-    written,
-    pending,
+    readByteCount,
+    writtenRuneCount,
+    pendingBytes,
   };
 }
 
@@ -103,11 +100,7 @@ function _decodeBe(
     fatal: boolean;
     replacementRune: Rune;
   },
-): {
-  read: SafeInteger;
-  written: SafeInteger;
-  pending: Array<Uint8>;
-} {
+): TextEncoding.DecodeResult {
   return _decodeShared(srcBuffer, dstRunes, options, false);
 }
 
@@ -119,11 +112,7 @@ function _decodeLe(
     fatal: boolean;
     replacementRune: Rune;
   },
-): {
-  read: SafeInteger;
-  written: SafeInteger;
-  pending: Array<Uint8>;
-} {
+): TextEncoding.DecodeResult {
   return _decodeShared(srcBuffer, dstRunes, options, true);
 }
 
@@ -135,44 +124,46 @@ function _encodeShared(
     replacementBytes: Array<Uint8>;
   },
   littleEndian: boolean,
-): TextEncoderEncodeIntoResult {
+): TextEncoding.EncodeResult {
   const dstView = new DataView(dstBuffer);
 
-  let read = 0;
-  let written = 0;
+  let readCharCount = 0;
+  let writtenByteCount = 0;
 
   for (const rune of srcString) {
     const codePoint = rune.codePointAt(0) as CodePoint;
 
-    if ((written + (rune.length * Uint32.BYTES)) > dstView.byteLength) {
+    if (
+      (writtenByteCount + (rune.length * Uint32.BYTES)) > dstView.byteLength
+    ) {
       break;
     }
-    read = read + rune.length;
+    readCharCount = readCharCount + rune.length;
 
     if (CodePoint.isSurrogateCodePoint(codePoint) !== true) {
       dstView.setUint32(
-        written,
+        writtenByteCount,
         rune.codePointAt(0) as CodePoint,
         littleEndian,
       );
-      written = written + Uint32.BYTES;
+      writtenByteCount = writtenByteCount + Uint32.BYTES;
     } else {
       if (options.fatal === true) {
         throw new TypeError(
-          `encode-error: \uFFFD ${CodePoint.toString(codePoint)}`,
+          `encode-error: ${CodePoint.toString(codePoint)}`,
         );
       } else {
         for (const byte of options.replacementBytes) {
-          dstView.setInt8(written, byte);
-          written = written + Uint8.BYTES;
+          dstView.setUint8(writtenByteCount, byte);
+          writtenByteCount = writtenByteCount + Uint8.BYTES;
         }
       }
     }
   }
 
   return {
-    read,
-    written,
+    readCharCount,
+    writtenByteCount,
   };
 }
 
@@ -183,7 +174,7 @@ function _encodeBe(
     fatal: boolean;
     replacementBytes: Array<Uint8>;
   },
-): TextEncoderEncodeIntoResult {
+): TextEncoding.EncodeResult {
   return _encodeShared(srcString, dstBuffer, options, false);
 }
 
@@ -194,7 +185,7 @@ function _encodeLe(
     fatal: boolean;
     replacementBytes: Array<Uint8>;
   },
-): TextEncoderEncodeIntoResult {
+): TextEncoding.EncodeResult {
   return _encodeShared(srcString, dstBuffer, options, true);
 }
 
@@ -209,7 +200,7 @@ function _getReplacement(
   if (StringEx.isString(replacementRune) && (replacementRune.length === 1)) {
     try {
       const tmp = new ArrayBuffer(_MAX_BYTES_PER_RUNE);
-      const { written } = _encodeShared(
+      const { writtenByteCount } = _encodeShared(
         replacementRune,
         tmp,
         {
@@ -222,7 +213,9 @@ function _getReplacement(
       );
       return {
         rune: replacementRune,
-        bytes: [...new Uint8Array(tmp.slice(0, written))] as Array<Uint8>,
+        bytes: [...new Uint8Array(tmp.slice(0, writtenByteCount))] as Array<
+          Uint8
+        >,
       };
     } catch {
       // _DEFAULT_REPLACEMENT_BYTES を返す
@@ -311,6 +304,10 @@ export namespace Utf32 {
           maxBytesPerRune: _MAX_BYTES_PER_RUNE,
         });
       }
+
+      get [Symbol.toStringTag](): string {
+        return "Utf32.Be.EncoderStream";
+      }
     }
   }
 
@@ -360,6 +357,10 @@ export namespace Utf32 {
           strict: options?.strict === true,
           maxBytesPerRune: _MAX_BYTES_PER_RUNE,
         });
+      }
+
+      get [Symbol.toStringTag](): string {
+        return "Utf32.Le.EncoderStream";
       }
     }
   }
