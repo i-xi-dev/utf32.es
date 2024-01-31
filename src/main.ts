@@ -1,6 +1,8 @@
 import {
   CodePoint,
+  Radix,
   Rune,
+  SafeIntegerFormat,
   StringEx,
   TextEncoding,
   Uint32,
@@ -13,6 +15,11 @@ const _LE_LABEL = "UTF-32LE";
 const _MAX_BYTES_PER_RUNE = 4;
 
 type _RuneBytes = Array<Uint8>; // [Uint8, Uint8, Uint8, Uint8] ;
+
+const _formatOptions = SafeIntegerFormat.Options.resolve({
+  minIntegralDigits: 8,
+  radix: Radix.HEXADECIMAL,
+});
 
 //TODO プラットフォームのバイトオーダーでエンコード
 
@@ -71,8 +78,8 @@ function _decodeShared(
       if (options.fatal === true) {
         throw new TypeError(
           `decode-error: 0x${
-            (uint32 as number).toString(16).toUpperCase().padStart(8, "0")
-          }`, //TODO number-format
+            SafeIntegerFormat.format(uint32 as number, _formatOptions)
+          }`,
         );
       } else {
         dstRunes.push(options.replacementRune);
